@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단 가계부</title>
+    
+    <link rel="stylesheet" type="text/css" href="style.css">
+    
+</head>
+
+<body>
+    <div id="expense-container">
+        <h2 style="color: #0000FF;">가계부</h2>
+        <!-- 사용자가 입력할 수 있는 입력 상자들 -->
+        <input type="text" id="description-input" placeholder="지출 내용">
+        <input type="number" id="quantity-input" placeholder="갯수">
+        <input type="number" id="price-input" placeholder="가격">
+        <!-- 버튼들 -->
+        <button id="add-expense-button">지출 기록하기</button>
+        <button id="reset-expenses-button">리셋</button>
+        <!-- 지출 내역을 표시할 목록과 총 금액 -->
+        <ul id="expense-list"></ul>
+        <div id="total-amount">총 금액: 0 원</div>
+    </div>
+
+    <script>
+        // 필요한 DOM 요소들을 변수에 할당
+        const descriptionInput = document.getElementById('description-input');
+        const quantityInput = document.getElementById('quantity-input');
+        const priceInput = document.getElementById('price-input');
+        const addExpenseButton = document.getElementById('add-expense-button');
+        const resetExpensesButton = document.getElementById('reset-expenses-button');
+        const expenseList = document.getElementById('expense-list');
+        const totalAmountElement = document.getElementById('total-amount');
+
+        // 이벤트 리스너 추가
+        addExpenseButton.addEventListener('click', addExpense);
+        resetExpensesButton.addEventListener('click', resetExpenses);
+
+        // 페이지 로드 시 로컬 스토리지에서 지출 내역 불러오기
+        window.addEventListener('load', loadExpenses);
+
+        // 지출 기록 함수
+        function addExpense() {
+            const description = descriptionInput.value.trim();
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+
+            // 입력이 유효한지 확인
+            if (description !== '' && quantity > 0 && price > 0) {
+                // 새로운 지출 아이템 생성
+                const expenseItem = document.createElement('li');
+                expenseItem.className = 'expense-item';
+                const total = quantity * price;
+                // 지출 내역 목록에 추가
+                expenseItem.textContent = `${description}: ${quantity}개 - ${price.toLocaleString()}원 = ${total.toLocaleString()}원`;
+                expenseList.appendChild(expenseItem);
+
+                // 지출 내역을 로컬 스토리지에 저장
+                saveExpense({ description, quantity, price });
+
+                // 총 금액 갱신
+                updateTotalAmount();
+
+                // 입력 필드 초기화
+                descriptionInput.value = '';
+                quantityInput.value = '';
+                priceInput.value = '';
+            }
+        }
+
+        // 지출 내역 저장 함수
+        function saveExpense(expense) {
+            let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            expenses.push(expense);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+        }
+
+        // 저장된 지출 내역 로드 함수
+        function loadExpenses() {
+            let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+
+            // 저장된 지출 내역을 목록에 추가
+            expenses.forEach(expense => {
+                const expenseItem = document.createElement('li');
+                expenseItem.className = 'expense-item';
+                const total = expense.quantity * expense.price;
+                expenseItem.textContent = `${expense.description}: ${expense.quantity}개 - ${expense.price.toLocaleString()}원 = ${total.toLocaleString()}원`;
+                expenseList.appendChild(expenseItem);
+            });
+
+            // 총 금액 갱신
+            updateTotalAmount();
+        }
+
+        // 총 금액 갱신 함수
+        function updateTotalAmount() {
+            let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            let totalAmount = 0;
+
+            // 저장된 지출 내역의 총 금액 계산
+            expenses.forEach(expense => {
+                totalAmount += expense.quantity * expense.price;
+            });
+
+            // 총 금액 업데이트
+            totalAmountElement.textContent = `총 금액: ${totalAmount.toLocaleString()} 원`;
+        }
+
+        // 지출 내역 리셋 함수
+        function resetExpenses() {
+            // 로컬 스토리지에서 지출 내역 삭제
+            localStorage.removeItem('expenses');
+            // 목록 비우기
+            expenseList.innerHTML = '';
+            // 총 금액 초기화
+            totalAmountElement.textContent = '총 금액: 0 원';
+        }
+    </script>
+</body>
+
+</html>
